@@ -1,0 +1,35 @@
+<apex:component controller="Milestone2_Charts_GanttController">
+    <apex:includeScript value="{!URLFOR($Resource.PT_Resources_v1, 'js/Milestone2_jsgantt.js')}"/>
+    <!-- apex:includeScript value="{! $Resource.Milestone2_jsgantt }" / -->
+
+    <apex:attribute name="target" type="String" required="true" 
+                    description="Id of parent object" assignTo="{!myTarget}" />   
+    <apex:attribute name="size" type="String" required="true"
+                    description="Default to day, week, month, or quarter format" assignTo="{!mySize}" /> 
+    <apex:attribute name="options" type="String" required="false"
+                    description="What options should we present to format gantt?" assignTo="{!myOptions}" /> 
+    
+
+    <div id="GanttChartDIV_{! myTarget }" style="background-color:white;"/>
+           
+    <script>
+        var g = new JSGantt.GanttChart('g',document.getElementById("GanttChartDIV_{! myTarget }"), "{! mySize }");
+        
+        g.setShowRes(0); // Show/Hide Responsible (0/1)
+        g.setShowDur(0); // Show/Hide Duration (0/1)
+        g.setShowComp(0); // Show/Hide % Complete(0/1)
+        <apex:outputText rendered="{! (myOptions != null) }">
+            g.setFormatArr("{! myOptions }");
+        </apex:outputText>
+        g.setCaptionType("None");  // Set to Show Caption (None,Caption,Resource,Duration,Complete)
+
+        <apex:repeat value="{! taskItems }" var="item">
+            g.AddTaskItem(new JSGantt.TaskItem(
+                {!item[0]}, "{!JSINHTMLENCODE(item[1])}", "{!item[2]}", "{!item[3]}", "{!item[4]}", "{!item[5]}", {!item[6]}, "{!item[7]}",
+                {!item[8]}, {!item[9]}, {!item[10]}, {!item[11]}, "{!item[12]}", "{!item[13]}"));
+        </apex:repeat>
+        g.Draw();
+        
+    </script>
+
+</apex:component>
