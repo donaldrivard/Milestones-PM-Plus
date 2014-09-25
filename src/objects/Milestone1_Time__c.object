@@ -119,6 +119,15 @@
         <externalId>false</externalId>
         <inlineHelpText>The task that is having time charged to it.</inlineHelpText>
         <label>Project Task</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>$User.Id</field>
+                <operation>equals</operation>
+                <valueField>Milestone1_Task__c.Assigned_To__r.Id</valueField>
+            </filterItems>
+            <isOptional>true</isOptional>
+        </lookupFilter>
         <referenceTo>Milestone1_Task__c</referenceTo>
         <relationshipLabel>Times</relationshipLabel>
         <relationshipName>Project_Times</relationshipName>

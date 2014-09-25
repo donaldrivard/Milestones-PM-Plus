@@ -28,10 +28,12 @@ public with sharing class Milestone2_Charts_GanttController {
     private String nameFieldName;
     private String completedFieldName;
     private String filterFieldName;
+    
+    private String predecessor;
         
     public List<Sobject> sObjectList {get; set;}
     
-    public static final String COLOR_COMPLETE = '333333'; //Dark Grey
+    public static final String COLOR_COMPLETE = '009933'; //Dark Grey
     public static final String COLOR_LATE = 'ee3322'; //Red
     public static final String COLOR_FUTURE = '666666'; //Light Grey
     public static final String COLOR_CURRENT = '2299bb'; //Blue
@@ -58,8 +60,10 @@ public with sharing class Milestone2_Charts_GanttController {
                 endDateFieldName = Milestone1_Milestone__c.Deadline__c.getDescribe().getName();
                 nameFieldName = Milestone1_Milestone__c.NameClean__c.getDescribe().getName();
                 filterFieldName = Milestone1_Milestone__c.Project__c.getDescribe().getName();
+                predecessor = Milestone1_Milestone__c.Predecessor_Milestone__c.getDescribe().getName();
 
                 objectType = Schema.SObjectType.Milestone1_Milestone__c.getName();
+                completedFieldName = 'Complete__c';
 
             }else if(mytarget.startsWith(Schema.SObjectType.Milestone1_Milestone__c.getKeyPrefix())){
 
@@ -67,14 +71,27 @@ public with sharing class Milestone2_Charts_GanttController {
                 endDateFieldName = Milestone1_Task__c.Due_Date__c.getDescribe().getName();
                 nameFieldName = Milestone1_Task__c.Name.getDescribe().getName();
                 filterFieldName = Milestone1_Task__c.Project_Milestone__c.getDescribe().getName();
+                predecessor = Milestone1_Task__c.Predecessor_Task__c.getDescribe().getName();
                                 
                 objectType = Schema.SObjectType.Milestone1_Task__c.getName();
+                completedFieldName = 'Complete__c';
                 
-            } else {
+            }else if(mytarget.startsWith(Schema.SObjectType.Milestone1_Program__c.getKeyPrefix())){
+                startDateFieldName = Milestone1_Project__c.Kickoff__c.getDescribe().getName();
+                endDateFieldName = Milestone1_Project__c.Deadline__c.getDescribe().getName();
+                nameFieldName = Milestone1_Project__c.Name.getDescribe().getName();
+                filterFieldName = Milestone1_Project__c.Program__c.getDescribe().getName();
+                predecessor = Milestone1_Project__c.Predecessor_Project__c.getDescribe().getName();
+
+                objectType = Schema.SObjectType.Milestone1_Project__c.getName();
+                completedFieldName = 'Status__c';
+            }
+             else {
                 throw new Milestone1_Exception('[initFieldNames] Unable to generate JSON for ' + mytarget);
             }
             idFieldName = 'Id';
-            completedFieldName = 'Complete__c'; 
+
+             
         }
     }
     
@@ -83,9 +100,13 @@ public with sharing class Milestone2_Charts_GanttController {
     */
     private void retrieveData(){
         
-        String query = 'Select '+idFieldName+','+startDateFieldName+','+endDateFieldName+','+nameFieldName+','+completedFieldName+
-                       ' from '+objectType+ ' where '+filterFieldName+'=\''+mytarget+'\' order by ' + startDateFieldName;
+        
+        String query = 'Select ' + idFieldName + ',' + startDateFieldName + ',' + endDateFieldName + ',' + nameFieldName + ',' + completedFieldName + ',' + predecessor +
+                    ' from ' + objectType + ' where ' + filterFieldName +'=\'' + mytarget + '\' order by ' + startDateFieldName + ',' + endDateFieldName + ',' + nameFieldName;
+        
         sobjectList = Database.query(query);
+        
+        system.debug(sobjectList);
     }
     
     /**
@@ -94,7 +115,7 @@ public with sharing class Milestone2_Charts_GanttController {
     private void toJSon(){
 
         Date startDate,endDate;
-        String name, id, color, sDateString, eDateString, urlString;
+        String name, id, color, sDateString, eDateString, urlString, dependencies = '';
         Integer i, completed;
         
         taskItems = new List<List<String>>();
@@ -115,14 +136,22 @@ public with sharing class Milestone2_Charts_GanttController {
             }
             eDateString = endDate.month() + '/' + endDate.day() + '/' + endDate.year();
             
-            if(Boolean.valueOf(current.get(completedFieldName)))
+//            system.debug('Complete = ' + current.get(completedFieldName));
+//            if(Boolean.valueOf(current.get(completedFieldName)))
+			if(current.get(completedFieldName) == true)
                 completed = 1;
-            else
+            else{
                 completed = 0;
+                if(current.get(completedFieldName) == 'Completed'){
+                completed = 1;
+                }
+                
+            }
             
             name = String.valueOf(current.get(nameFieldName));
             id = String.valueOf(current.get(idFieldName));
             urlString = URL.getSalesforceBaseUrl().toExternalForm() + '/' + id;
+            dependencies = String.valueOf(current.get(predecessor));
 
             color=COLOR_CURRENT;
             if (completed == 1) {
@@ -148,11 +177,13 @@ pParent: (required) identifies a parent pID, this causes this task to be a child
 pOpen: can be initially set to close folder when chart is first drawn
 pDepend: optional list of id's this task is dependent on ... line drawn from dependent to this item
 pCaption: optional caption that will be added after task bar if CaptionType set to "Caption"
-*/    
-          
-            taskItems.add(new String[]{String.valueOf(++i), name, sDateString, 
-                eDateString, color, urlString, '0','Brent',
-                String.valueOf(completed), '0','0','0', '', ''});
+*/
+       
+            //last argument isn't used but should be kept to avoid page error   
+            taskItems.add(new String[]{id, name, sDateString, 
+                                       eDateString, color, urlString, '0','Brent',
+                                       String.valueOf(completed), '0','0','0', dependencies, ''});
+           
         }
     }
 

@@ -456,7 +456,7 @@
         <fullName>Project__c</fullName>
         <deprecated>false</deprecated>
         <externalId>false</externalId>
-        <formula>HYPERLINK(Project_Milestone__r.Project__c, Project_Milestone__r.Project__r.Name,&apos;_self&apos;)</formula>
+        <formula>HYPERLINK(&quot;/&quot; &amp; Project_Milestone__r.Project__c, Project_Milestone__r.Project__r.Name,&apos;_self&apos;)</formula>
         <inlineHelpText>A link to the Project which this task is included in via its milestone.</inlineHelpText>
         <label>Project</label>
         <required>false</required>

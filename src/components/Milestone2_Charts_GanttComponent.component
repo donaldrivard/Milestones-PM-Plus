@@ -1,34 +1,75 @@
 <apex:component controller="Milestone2_Charts_GanttController">
+
+    <apex:stylesheet value="{!URLFOR($Resource.PT_Resources_v1, 'css/jsgantt.css')}"/>
+    
+    <!--<apex:includeScript value="{!$Resource.Milestones2JsGantt}"/>-->
     <apex:includeScript value="{!URLFOR($Resource.PT_Resources_v1, 'js/Milestone2_jsgantt.js')}"/>
-    <!-- apex:includeScript value="{! $Resource.Milestone2_jsgantt }" / -->
 
     <apex:attribute name="target" type="String" required="true" 
                     description="Id of parent object" assignTo="{!myTarget}" />   
     <apex:attribute name="size" type="String" required="true"
                     description="Default to day, week, month, or quarter format" assignTo="{!mySize}" /> 
     <apex:attribute name="options" type="String" required="false"
-                    description="What options should we present to format gantt?" assignTo="{!myOptions}" /> 
+                    description="What options should we present to format gantt?" assignTo="{!myOptions}" />
+    
     
 
-    <div id="GanttChartDIV_{! myTarget }" style="background-color:white;"/>
+    <div id="GanttChartDIV_{! myTarget }" style="background-color:white; position:relative"/>
+    
+    
            
     <script>
         var g = new JSGantt.GanttChart('g',document.getElementById("GanttChartDIV_{! myTarget }"), "{! mySize }");
+        var renderDiamond, completionRate, objType;
         
-        g.setShowRes(0); // Show/Hide Responsible (0/1)
-        g.setShowDur(0); // Show/Hide Duration (0/1)
-        g.setShowComp(0); // Show/Hide % Complete(0/1)
+        g.setShowRes(0); // Show/Hide Responsible (1/0)
+        g.setShowDur(0); // Show/Hide Duration (1/0)
+        g.setShowComp(0); // Show/Hide % Complete(1/0)
         <apex:outputText rendered="{! (myOptions != null) }">
             g.setFormatArr("{! myOptions }");
         </apex:outputText>
         g.setCaptionType("None");  // Set to Show Caption (None,Caption,Resource,Duration,Complete)
 
         <apex:repeat value="{! taskItems }" var="item">
+            console.log('obj type = ' + "{!objectType}");
+            objType = "{!objectType}";
+            //render diamond graphic if start and end dates are same
+            if({!item[2]} == {!item[3]} && objType.indexOf("Milestone__c") != -1)
+            {
+                renderDiamond = 1;
+            //    completionRate = 100;    <!-- makes the diamond render in black color -->
+            }
+            else
+            {
+                renderDiamond = 0;
+            //   completionRate = {!item[8]};
+            }
+            if({!item[8]} == 1){
+                completionRate = 100;
+            }else{
+                completionRate = {!item[8]};
+            }
+
+                
+            <!-- system.debug('value of dependencies: ' + {!item[12]}); -->
+            
+            <!-- "{!JSINHTMLENCODE(item[1])}" -->
+            
+            <!-- removed item[13] to get rid of page error. Should replace if client wants captions -->
+            console.log('item 7 = ' + "{!item[7]}");           
             g.AddTaskItem(new JSGantt.TaskItem(
-                {!item[0]}, "{!JSINHTMLENCODE(item[1])}", "{!item[2]}", "{!item[3]}", "{!item[4]}", "{!item[5]}", {!item[6]}, "{!item[7]}",
-                {!item[8]}, {!item[9]}, {!item[10]}, {!item[11]}, "{!item[12]}", "{!item[13]}"));
+                "{!item[0]}", "{!JSINHTMLENCODE(item[1])}", "{!item[2]}", "{!item[3]}", "{!item[4]}", "{!item[5]}", renderDiamond, "{!item[7]}",
+                completionRate, {!item[9]}, {!item[10]}, {!item[11]}, "{!item[12]}"));
+                
         </apex:repeat>
+        
+       /*
+        g.AddTaskItem(new JSGantt.TaskItem(18, 'Parent Milestone', '7/8/2013','7/8/2013', 'ff00ff', 'http://help.com', 1, 'Brian', 49, 0, 0, 1));
+        g.AddTaskItem(new JSGantt.TaskItem(19, 'Chart Object', '7/20/2013', '7/27/2013', 'ff00ff', 'http://www.yahoo.com', 0, 'Shlomy',  100, 0, 0, 1, "18"));
+       */
+        
         g.Draw();
+        g.DrawDependencies();
         
     </script>
 

@@ -181,6 +181,34 @@
         <unique>false</unique>
     </fields>
     <fields>
+        <fullName>Predecessor_Project__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <label>Predecessor Project</label>
+        <referenceTo>Milestone1_Project__c</referenceTo>
+        <relationshipLabel>Projects</relationshipLabel>
+        <relationshipName>Projects</relationshipName>
+        <required>false</required>
+        <trackFeedHistory>false</trackFeedHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Program__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <label>Program</label>
+        <referenceTo>Milestone1_Program__c</referenceTo>
+        <relationshipLabel>Projects</relationshipLabel>
+        <relationshipName>Projects</relationshipName>
+        <required>false</required>
+        <trackFeedHistory>false</trackFeedHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
         <fullName>Status_BudgetExpenseSummary__c</fullName>
         <deprecated>false</deprecated>
         <externalId>false</externalId>
