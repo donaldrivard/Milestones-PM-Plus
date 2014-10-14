@@ -19,8 +19,8 @@
     
            
     <script>
-        var g = new JSGantt.GanttChart('g',document.getElementById("GanttChartDIV_{! myTarget }"), "{! mySize }");
-        var renderDiamond, completionRate, objType;
+        var g = new JSGantt.GanttChart("{! myTarget }",document.getElementById("GanttChartDIV_{! myTarget }"), "{! mySize }");
+        var renderDiamond, completionRate, objType, childObjType;
         
         g.setShowRes(0); // Show/Hide Responsible (1/0)
         g.setShowDur(0); // Show/Hide Duration (1/0)
@@ -33,6 +33,7 @@
         <apex:repeat value="{! taskItems }" var="item">
             console.log('obj type = ' + "{!objectType}");
             objType = "{!objectType}";
+            childObjType = "{!childObjectType}";
             //render diamond graphic if start and end dates are same
             if({!item[2]} == {!item[3]} && objType.indexOf("Milestone__c") != -1)
             {
@@ -56,21 +57,66 @@
             <!-- "{!JSINHTMLENCODE(item[1])}" -->
             
             <!-- removed item[13] to get rid of page error. Should replace if client wants captions -->
-            console.log('item 7 = ' + "{!item[7]}");           
+            console.log('item 3 & 2 = ' + "{!item[2]}" + "{!item[3]}");           
             g.AddTaskItem(new JSGantt.TaskItem(
                 "{!item[0]}", "{!JSINHTMLENCODE(item[1])}", "{!item[2]}", "{!item[3]}", "{!item[4]}", "{!item[5]}", renderDiamond, "{!item[7]}",
                 completionRate, {!item[9]}, {!item[10]}, {!item[11]}, "{!item[12]}"));
+
+            //////////////////////////////////////////////////////
+            if("{!item[9]}" == "1" && "{!item[7]}" != "1"){
+
+
+                 <apex:repeat value="{! childTaskItems }" var="child">
+					<!-- need to change child[13] to child[14] -->
+					var obj = "{!child}";
+					var cnt = Number(obj.split(",").length - 1);
+//					console.log("cnt = " + cnt);
+//					console.log("child last item = " + "{child[parseInt(cnt)]}");
+                    if("{!child[13]}" == "{item[0]}"){
+
+                         if({!child[2]} == {!child[3]} && childObjType.indexOf("Milestone__c") != -1)
+                        {
+                            renderDiamond = 1;
+                        //    completionRate = 100;    <!-- makes the diamond render in black color -->
+                        }
+                        else
+                        {
+                            renderDiamond = 0;
+                        //   completionRate = {!child[8]};
+                        }
+                        if({!child[8]} == 1){
+                            completionRate = 100;
+                        }else{
+                            completionRate = {!child[8]};
+                        }
+
+                            
+                        <!-- system.debug('value of dependencies: ' + {!child[12]}); -->
+                        
+                        <!-- "{!JSINHTMLENCODE(child[1])}" -->
+                        
+                        <!-- removed child[13] to get rid of page error. Should replace if client wants captions -->
+                        console.log('child 3 & 2 = ' + "{!child[2]}" + "{!child[3]}");           
+                        g.AddTaskItem(new JSGantt.TaskItem(
+                            "{!child[0]}", "{!JSINHTMLENCODE(child[1])}", "{!child[2]}", "{!child[3]}", "{!child[4]}", "{!child[5]}", renderDiamond, "{!child[7]}",
+                            completionRate, {!child[9]}, {!child[10]}, {!child[11]}, "{!child[12]}"));
+                    }
+
+
+                 </apex:repeat>
+
+
+            }
+
+
+            //////////////////////////////////////////////////////
                 
         </apex:repeat>
-        
-       /*
-        g.AddTaskItem(new JSGantt.TaskItem(18, 'Parent Milestone', '7/8/2013','7/8/2013', 'ff00ff', 'http://help.com', 1, 'Brian', 49, 0, 0, 1));
-        g.AddTaskItem(new JSGantt.TaskItem(19, 'Chart Object', '7/20/2013', '7/27/2013', 'ff00ff', 'http://www.yahoo.com', 0, 'Shlomy',  100, 0, 0, 1, "18"));
-       */
         
         g.Draw();
         g.DrawDependencies();
         
+                
     </script>
 
 </apex:component>
