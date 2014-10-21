@@ -1,9 +1,8 @@
 <apex:component controller="Milestone2_Charts_GanttController">
 
     <apex:stylesheet value="{!URLFOR($Resource.PT_Resources_v1, 'css/jsgantt.css')}"/>
-    
-    <!--<apex:includeScript value="{!$Resource.Milestones2JsGantt}"/>-->
-    <apex:includeScript value="{!URLFOR($Resource.PT_Resources_v1, 'js/Milestone2_jsgantt.js')}"/>
+
+    <apex:includeScript value="{!$Resource.Milestone2_jsgantt}"/>
 
     <apex:attribute name="target" type="String" required="true" 
                     description="Id of parent object" assignTo="{!myTarget}" />   
@@ -18,105 +17,84 @@
     
     
            
-    <script>
-        var g = new JSGantt.GanttChart("{! myTarget }",document.getElementById("GanttChartDIV_{! myTarget }"), "{! mySize }");
+    <script language="javascript">
+    eval("var gantt" + "{! myTarget }" + ";");
+    var g;
+    var ganttName = "gantt" + "{! myTarget }";
+    
+	(function() {
+    	eval("this.gantt" + "{! myTarget }" + "= new JSGantt.GanttChart(\"gantt\" + \"{! myTarget }\",document.getElementById(\"GanttChartDIV_{! myTarget }\"), \"{! mySize }\", \"{! myTarget }\");");
+    	g = this['gantt' + "{! myTarget }"];
         var renderDiamond, completionRate, objType, childObjType;
         
         g.setShowRes(0); // Show/Hide Responsible (1/0)
         g.setShowDur(0); // Show/Hide Duration (1/0)
         g.setShowComp(0); // Show/Hide % Complete(1/0)
+        
         <apex:outputText rendered="{! (myOptions != null) }">
             g.setFormatArr("{! myOptions }");
         </apex:outputText>
+       
         g.setCaptionType("None");  // Set to Show Caption (None,Caption,Resource,Duration,Complete)
 
         <apex:repeat value="{! taskItems }" var="item">
-            console.log('obj type = ' + "{!objectType}");
             objType = "{!objectType}";
             childObjType = "{!childObjectType}";
-            //render diamond graphic if start and end dates are same
-            if({!item[2]} == {!item[3]} && objType.indexOf("Milestone__c") != -1)
-            {
-                renderDiamond = 1;
-            //    completionRate = 100;    <!-- makes the diamond render in black color -->
-            }
-            else
-            {
-                renderDiamond = 0;
-            //   completionRate = {!item[8]};
-            }
-            if({!item[8]} == 1){
-                completionRate = 100;
-            }else{
-                completionRate = {!item[8]};
-            }
 
-                
-            <!-- system.debug('value of dependencies: ' + {!item[12]}); -->
-            
-            <!-- "{!JSINHTMLENCODE(item[1])}" -->
-            
-            <!-- removed item[13] to get rid of page error. Should replace if client wants captions -->
-            console.log('item 3 & 2 = ' + "{!item[2]}" + "{!item[3]}");           
+			renderDiamond = checkForSingleDayMilestone({!item[2]}, {!item[3]}, objType.indexOf("Milestone__c"));  
+			          
+			completionRate = getCompletionRate({!item[8]}); 
+			
             g.AddTaskItem(new JSGantt.TaskItem(
                 "{!item[0]}", "{!JSINHTMLENCODE(item[1])}", "{!item[2]}", "{!item[3]}", "{!item[4]}", "{!item[5]}", renderDiamond, "{!item[7]}",
                 completionRate, {!item[9]}, {!item[10]}, {!item[11]}, "{!item[12]}"));
 
-            //////////////////////////////////////////////////////
-            if("{!item[9]}" == "1" && "{!item[7]}" != "1"){
+            if("{!item[9]}" == "1" && "{!item[7]}" != "1"){ //check if record has children
 
-
-                 <apex:repeat value="{! childTaskItems }" var="child">
-					<!-- need to change child[13] to child[14] -->
-					var obj = "{!child}";
-					var cnt = Number(obj.split(",").length - 1);
-//					console.log("cnt = " + cnt);
-//					console.log("child last item = " + "{child[parseInt(cnt)]}");
-                    if("{!child[13]}" == "{item[0]}"){
-
-                         if({!child[2]} == {!child[3]} && childObjType.indexOf("Milestone__c") != -1)
-                        {
-                            renderDiamond = 1;
-                        //    completionRate = 100;    <!-- makes the diamond render in black color -->
-                        }
-                        else
-                        {
-                            renderDiamond = 0;
-                        //   completionRate = {!child[8]};
-                        }
-                        if({!child[8]} == 1){
-                            completionRate = 100;
-                        }else{
-                            completionRate = {!child[8]};
-                        }
-
-                            
-                        <!-- system.debug('value of dependencies: ' + {!child[12]}); -->
+                 <apex:repeat value="{! childTaskItems }" var="child"> //loop through all of the children
+                 
+                    if("{!child[14]}" == "{!item[0]}"){	//check if child belongs to parent record being rendered
+                    
+                        renderDiamond = checkForSingleDayMilestone({!child[2]}, {!child[3]}, childObjType.indexOf("Milestone__c"));
                         
-                        <!-- "{!JSINHTMLENCODE(child[1])}" -->
-                        
-                        <!-- removed child[13] to get rid of page error. Should replace if client wants captions -->
-                        console.log('child 3 & 2 = ' + "{!child[2]}" + "{!child[3]}");           
+						completionRate = getCompletionRate({!child[8]});
+						      
                         g.AddTaskItem(new JSGantt.TaskItem(
                             "{!child[0]}", "{!JSINHTMLENCODE(child[1])}", "{!child[2]}", "{!child[3]}", "{!child[4]}", "{!child[5]}", renderDiamond, "{!child[7]}",
-                            completionRate, {!child[9]}, {!child[10]}, {!child[11]}, "{!child[12]}"));
+                            completionRate, {!child[9]}, {!child[10]}, {!child[11]}, "{!child[12]}", "{!child[13]}", "{!child[14]}"));
                     }
-
 
                  </apex:repeat>
 
-
             }
 
-
-            //////////////////////////////////////////////////////
-                
         </apex:repeat>
         
         g.Draw();
         g.DrawDependencies();
         
-                
+    })();
+    
+    //render diamond graphic if start and end dates are same and object is a milestone
+    function checkForSingleDayMilestone(start, end, isMilestone){
+    
+	    if(start == end && isMilestone != -1){
+	        return 1;
+	    }else{
+	        return 0;
+	    }
+    
+    }
+    
+    function getCompletionRate(compRate){
+    	if(compRate == 1){
+           return 100;
+        }else{
+           return compRate;
+        }
+    }
+    
+    
     </script>
 
 </apex:component>

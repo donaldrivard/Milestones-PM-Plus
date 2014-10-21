@@ -153,7 +153,6 @@ public with sharing class Milestone2_Charts_GanttController {
 
         }
 
-		system.debug(objectType);
 		if(objectType != Schema.SObjectType.Milestone1_Task__c.getName()){
         //add child records for multi level gantt
         childQuery = 'Select ' + childidFieldName + ',' + childstartDateFieldName + ',' + childendDateFieldName + ',' + childnameFieldName + ',' + childcompletedFieldName + ',' + childpredecessor + ',' + childfilterFieldName + 
@@ -167,8 +166,6 @@ public with sharing class Milestone2_Charts_GanttController {
             
 		}
 
-        
-        system.debug(sobjectList);
     }
     
     /**
@@ -198,8 +195,6 @@ public with sharing class Milestone2_Charts_GanttController {
             }
             eDateString = endDate.month() + '/' + endDate.day() + '/' + endDate.year();
             
-//            system.debug('Complete = ' + current.get(completedFieldName));
-//            if(Boolean.valueOf(current.get(completedFieldName)))
 			if(current.get(completedFieldName) == true)
                 completed = 1;
             else{
@@ -246,20 +241,20 @@ pCaption: optional caption that will be added after task bar if CaptionType set 
             //last argument isn't used but should be kept to avoid page error   
             taskItems.add(new String[]{id, name, sDateString, 
                                        eDateString, color, urlString, '0','Brent',
-                                       String.valueOf(completed), hasChildren,'0','0', dependencies, '', objectType});
+                                       String.valueOf(completed), hasChildren,'0','1', dependencies, '', objectType});
 
         }
     }
 
     private string checkIfParent(Id parentId){
-
-        for(sObject child : childsObjectList){
-            system.debug('check = ' + child.get(childfilterFieldName) + ' == ' + parentId);
-            if(child.get(childfilterFieldName) == parentId){
-                return '1';
-            }
-        }
-
+	
+		if(childsObjectList != null){
+	        for(sObject child : childsObjectList){
+	            if(child.get(childfilterFieldName) == parentId){
+	                return '1';
+	            }
+	        }
+		}
         return '0';
     }
 
@@ -287,8 +282,6 @@ pCaption: optional caption that will be added after task bar if CaptionType set 
             }
             eDateString = endDate.month() + '/' + endDate.day() + '/' + endDate.year();
             
-//            system.debug('Complete = ' + current.get(completedFieldName));
-//            if(Boolean.valueOf(current.get(completedFieldName)))
             if(current.get(childcompletedFieldName) == true)
                 completed = 1;
             else{
@@ -302,8 +295,15 @@ pCaption: optional caption that will be added after task bar if CaptionType set 
             name = String.valueOf(current.get(childnameFieldName));
             id = String.valueOf(current.get(childidFieldName));
             urlString = URL.getSalesforceBaseUrl().toExternalForm() + '/' + id;
-            dependencies = String.valueOf(current.get(childpredecessor));
             parentRec = String.ValueOf(current.get(childFilterFieldName));
+            
+            if(String.valueOf(current.get(childpredecessor)) != null){
+            	dependencies = String.valueOf(current.get(childpredecessor));
+            }
+            else{
+            	dependencies = '';
+            }
+            
 
             color=COLOR_CURRENT;
             if (completed == 1) {
@@ -313,13 +313,10 @@ pCaption: optional caption that will be added after task bar if CaptionType set 
             } else if (startDate > Date.today()) {
                 color=COLOR_FUTURE;
             }
- 			system.debug(new String[]{id, name, sDateString, 
-                                       eDateString, color, urlString, '0','Brent',
-                                       String.valueOf(completed), '0','0','0', dependencies, '', parentRec}.size());
-                                       
+                                    
             childTaskItems.add(new String[]{id, name, sDateString, 
                                        eDateString, color, urlString, '0','Brent',
-                                       String.valueOf(completed), '0','0','0', dependencies, '', parentRec});
+                                       String.valueOf(completed), '0','0','1', dependencies, '', parentRec});
 
         }
 
